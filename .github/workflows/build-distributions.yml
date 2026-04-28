@@ -49,14 +49,17 @@ jobs:
             os: ubuntu-latest
             platform: linux
             target: AppImage
+            artifact_glob: dist/electron/*.AppImage
           - id: macos
             os: macos-latest
             platform: mac
             target: zip
+            artifact_glob: dist/electron/*.zip
           - id: windows
             os: windows-latest
             platform: win
             target: portable
+            artifact_glob: dist/electron/*.exe
 
     permissions:
       contents: read
@@ -88,9 +91,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-distribution-${{ matrix.id }}
-          path: |
-            dist/electron/**/*
-            !dist/electron/builder-debug.yml
-            !dist/electron/builder-effective-config.yaml
+          path: ${{ matrix.artifact_glob }}
           if-no-files-found: error
           retention-days: 7
