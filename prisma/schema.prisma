@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdJobs  ActionJob[]  @relation("CreatedJobs")
+  auditLogs    AuditLog[]   @relation("ActorAuditLogs")
+  memberships  Membership[]
+}
+
+model Workspace {
+  id            String               @id @default(cuid())
+  name          String
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  auditLogs     AuditLog[]
+  hfAccounts    HuggingFaceAccount[]
+  memberships   Membership[]
+  trackedSpaces TrackedSpace[]
+  wakePolicies  WakePolicy[]
+}
+
+model Membership {
+  id          String         @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        MembershipRole
+  createdAt   DateTime       @default(now())
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+}
+
+model HuggingFaceAccount {
+  id               String         @id @default(cuid())
+  workspaceId      String
+  label            String
+  username         String
+  tokenCiphertext  String
+  tokenIv          String
+  tokenAuthTag     String
+  tokenFingerprint String
+  tokenRole        String?
+  lastValidatedAt  DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  workspace        Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trackedSpaces    TrackedSpace[]
+
+  @@unique([workspaceId, label])
+}
+
+model TrackedSpace {
+  id                String             @id @default(cuid())
+  workspaceId       String
+  hfAccountId       String
+  repoId            String
+  name              String
+  subdomain         String?
+  sdk               String?
+  visibility        String
+  stage             String?
+  hardware          String?
+  requestedHardware String?
+  sleepTimeSeconds  Int?
+  lastModifiedAt    DateTime?
+  lastSyncedAt      DateTime?
+  lastWakeAt        DateTime?
+  lastActionAt      DateTime?
+  enabled           Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  actionJobs        ActionJob[]
+  snapshots         SpaceSnapshot[]
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  hfAccount         HuggingFaceAccount @relation(fields: [hfAccountId], references: [id], onDelete: Cascade)
+  wakePolicies      WakePolicy?
+
+  @@unique([workspaceId, repoId])
+}
+
+model SpaceSnapshot {
+  id                String       @id @default(cuid())
+  trackedSpaceId    String
+  capturedAt        DateTime     @default(now())
+  stage             String?
+  hardware          String?
+  requestedHardware String?
+  sleepTimeSeconds  Int?
+  rawPayload        Json
+  trackedSpace      TrackedSpace @relation(fields: [trackedSpaceId], references: [id], onDelete: Cascade)
+
+  @@index([trackedSpaceId, capturedAt])
+}
+
+model ActionJob {
+  id             String       @id @default(cuid())
+  trackedSpaceId String
+  createdById    String?
+  wakePolicyId   String?
+  type           ActionType
+  status         ActionStatus @default(PENDING)
+  reason         String?
+  attemptCount   Int          @default(0)
+  workerId       String?
+  availableAt    DateTime     @default(now())
+  leaseExpiresAt DateTime?
+  lastError      String?
+  requestedAt    DateTime     @default(now())
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  wakePolicy     WakePolicy?  @relation(fields: [wakePolicyId], references: [id])
+  trackedSpace   TrackedSpace @relation(fields: [trackedSpaceId], references: [id], onDelete: Cascade)
+  createdBy      User?        @relation("CreatedJobs", fields: [createdById], references: [id])
+
+  @@index([status, availableAt, requestedAt])
+  @@index([workerId, leaseExpiresAt])
+  @@index([wakePolicyId, requestedAt])
+}
+
+model WakePolicy {
+  id              String       @id @default(cuid())
+  workspaceId     String
+  trackedSpaceId  String       @unique
+  enabled         Boolean      @default(true)
+  intervalMinutes Int
+  nextRunAt       DateTime
+  lastRunAt       DateTime?
+  lastRunStatus   String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  actionJobs      ActionJob[]
+  workspace       Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trackedSpace    TrackedSpace @relation(fields: [trackedSpaceId], references: [id], onDelete: Cascade)
+
+  @@index([enabled, nextRunAt])
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  workspaceId String
+  actorUserId String?
+  event       String
+  targetType  String
+  targetId    String
+  metadata    Json
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actorUser   User?     @relation("ActorAuditLogs", fields: [actorUserId], references: [id])
+
+  @@index([workspaceId, createdAt])
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+enum ActionType {
+  RESTART
+  REBUILD
+  SYNC
+}
+
+enum ActionStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}

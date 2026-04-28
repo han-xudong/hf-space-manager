@@ -1,0 +1,39 @@
+services:
+  web:
+    build:
+      context: .
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "3000:3000"
+    volumes:
+      - app-data:/app/data
+    command: sh -c "mkdir -p data && pnpm db:push && pnpm db:seed && pnpm start:web"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://localhost:3000/api/health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))\"",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build:
+      context: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      INTERNAL_WEB_BASE_URL: http://web:3000
+    depends_on:
+      web:
+        condition: service_healthy
+    volumes:
+      - app-data:/app/data
+    command: sh -c "mkdir -p data && pnpm db:push && pnpm worker"
+
+volumes:
+  app-data:

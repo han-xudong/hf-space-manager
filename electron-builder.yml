@@ -1,0 +1,35 @@
+appId: com.github.xudonghan.hf-space-manager
+productName: HF Space Manager
+artifactName: hf-space-manager-${version}-${os}-${arch}.${ext}
+asar: false
+directories:
+  output: dist/electron
+files:
+  - electron/**/*
+  - lib/**/*
+  - prisma/**/*
+  - scripts/**/*
+  - worker/**/*
+  - types/**/*
+  - .next/standalone/**/*
+  - .next/static/**/*
+  - public/**/*
+  - package.json
+  - tsconfig.json
+  - '!electron/README.md'
+  - '!**/*.md'
+  - '!data/**'
+  - '!dist/**'
+  - '!coverage/**'
+  - '!node_modules/.cache/**'
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - target: zip
+linux:
+  category: Development
+  target:
+    - target: AppImage
+win:
+  target:
+    - target: portable

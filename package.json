@@ -1,0 +1,49 @@
+{
+  "name": "hf-space-manager",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "main": "electron/main.mjs",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "next dev",
+    "dev:worker": "tsx worker/index.ts",
+    "build": "prisma generate && next build",
+    "postbuild": "node scripts/prepare-standalone.mjs",
+    "start": "node scripts/start-runtime.mjs",
+    "start:web": "node scripts/start-standalone.mjs",
+    "electron:dev": "electron electron/main.mjs",
+    "electron:smoke": "pnpm build && ELECTRON_SMOKE_TEST=1 electron electron/main.mjs",
+    "electron:pack": "pnpm build && electron-builder --config electron-builder.yml --publish never",
+    "electron:pack:dir": "pnpm build && electron-builder --config electron-builder.yml --dir --publish never",
+    "lint": "eslint .",
+    "worker": "tsx worker/index.ts",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@huggingface/hub": "^2.8.0",
+    "@prisma/client": "^6.4.0",
+    "bcryptjs": "^3.0.2",
+    "next": "^16.0.0",
+    "next-auth": "^5.0.0-beta.25",
+    "prisma": "^6.4.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tsx": "^4.21.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.5",
+    "electron": "^41.3.0",
+    "electron-builder": "^24.13.3",
+    "eslint": "^9.25.1",
+    "eslint-config-next": "^16.0.0",
+    "typescript": "^5.8.3"
+  }
+}

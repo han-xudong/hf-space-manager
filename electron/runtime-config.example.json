@@ -1,0 +1,11 @@
+{
+  "port": 3838,
+  "databaseUrl": "file:{{USER_DATA_DIR}}/hf-space-manager/data/hf-space-manager.db",
+  "appEncryptionKey": "{{APP_ENCRYPTION_KEY}}",
+  "bootstrapAdminName": "Admin",
+  "bootstrapAdminEmail": "admin@example.com",
+  "hfSyncIntervalSeconds": 60,
+  "hfWakeLookaheadSeconds": 120,
+  "internalWebBaseUrl": "http://127.0.0.1:3838",
+  "internalEventToken": "{{INTERNAL_EVENT_TOKEN}}"
+}

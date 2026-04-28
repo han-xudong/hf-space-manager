@@ -1,0 +1,48 @@
+FROM node:22.22.2-bookworm-slim AS base
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+WORKDIR /app
+
+FROM base AS deps
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+FROM deps AS build
+
+COPY . .
+
+RUN DATABASE_URL="file:../data/hf-space-manager.db" \
+	APP_ENCRYPTION_KEY="12345678901234567890123456789012" \
+	BOOTSTRAP_ADMIN_NAME="CI Admin" \
+	BOOTSTRAP_ADMIN_EMAIL="ci@example.com" \
+	HF_SYNC_INTERVAL_SECONDS="300" \
+	HF_WAKE_LOOKAHEAD_SECONDS="600" \
+	INTERNAL_WEB_BASE_URL="http://127.0.0.1:3000" \
+	INTERNAL_EVENT_TOKEN="12345678901234567890123456789012" \
+	pnpm prisma generate && \
+	DATABASE_URL="file:../data/hf-space-manager.db" \
+	APP_ENCRYPTION_KEY="12345678901234567890123456789012" \
+	BOOTSTRAP_ADMIN_NAME="CI Admin" \
+	BOOTSTRAP_ADMIN_EMAIL="ci@example.com" \
+	HF_SYNC_INTERVAL_SECONDS="300" \
+	HF_WAKE_LOOKAHEAD_SECONDS="600" \
+	INTERNAL_WEB_BASE_URL="http://127.0.0.1:3000" \
+	INTERNAL_EVENT_TOKEN="12345678901234567890123456789012" \
+	pnpm build
+
+FROM deps AS runtime
+
+ENV NODE_ENV="production"
+ENV PORT="3000"
+ENV HOSTNAME="0.0.0.0"
+
+COPY . .
+COPY --from=build /app/.next ./.next
+
+EXPOSE 3000
+
+CMD ["pnpm", "start"]
