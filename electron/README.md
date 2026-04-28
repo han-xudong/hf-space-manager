@@ -7,7 +7,7 @@ The packaged app still runs the same two local processes:
 - `web`: Next.js standalone server
 - `worker`: background scheduler and queue runner
 
-The repository now includes a minimal Electron host scaffold at [electron/main.mjs](/Users/xudonghan/Documents/hf-space-manager/electron/main.mjs) plus a preload bridge at [electron/preload.mjs](/Users/xudonghan/Documents/hf-space-manager/electron/preload.mjs).
+The repository now includes a minimal Electron host scaffold at [main.mjs](./main.mjs) plus a preload bridge at [preload.mjs](./preload.mjs).
 
 For cross-process realtime updates, the worker calls back into the local web runtime through:
 
@@ -50,7 +50,7 @@ You can optionally point the host at a JSON config file by setting `HFSM_ELECTRO
 
 ## Config Template
 
-See [electron/runtime-config.example.json](/Users/xudonghan/Documents/hf-space-manager/electron/runtime-config.example.json) for a template the Electron host can translate into process environment variables.
+See [runtime-config.example.json](./runtime-config.example.json) for a template the Electron host can translate into process environment variables.
 
 ## Local Commands
 

@@ -1,7 +1,7 @@
-# HF Space Manager
+<h1>HF Space Manager <img src="public/hfsm-logo.svg" alt="HFSM logo" width="30" /></h1>
 
-[![Build Distributions](https://github.com/xudonghan/hf-space-manager/actions/workflows/build-distributions.yml/badge.svg)](https://github.com/xudonghan/hf-space-manager/actions/workflows/build-distributions.yml)
-[![Release](https://github.com/xudonghan/hf-space-manager/actions/workflows/release.yml/badge.svg)](https://github.com/xudonghan/hf-space-manager/actions/workflows/release.yml)
+[![Build Distributions](https://github.com/han-xudong/hf-space-manager/actions/workflows/build-distributions.yml/badge.svg)](https://github.com/han-xudong/hf-space-manager/actions/workflows/build-distributions.yml)
+[![Release](https://github.com/han-xudong/hf-space-manager/actions/workflows/release.yml/badge.svg)](https://github.com/han-xudong/hf-space-manager/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 HF Space Manager is a self-hosted control plane for Hugging Face Spaces. It provides a web dashboard for live Space status, secure Hugging Face token management, operational actions such as sync, rebuild, and restart, and local-first deployment through Docker or Electron.

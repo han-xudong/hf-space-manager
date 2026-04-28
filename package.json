@@ -1,11 +1,15 @@
 {
   "name": "hf-space-manager",
   "version": "0.1.0",
+  "description": "Self-hosted control plane for managing Hugging Face Spaces.",
+  "author": "han-xudong",
   "license": "MIT",
   "private": true,
   "main": "electron/main.mjs",
   "packageManager": "pnpm@9.0.0",
   "scripts": {
+    "icons:generate": "node scripts/generate-icons.mjs",
+    "prebuild": "node scripts/generate-icons.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:web": "next dev",
     "dev:worker": "tsx worker/index.ts",
@@ -44,6 +48,7 @@
     "electron-builder": "^24.13.3",
     "eslint": "^9.25.1",
     "eslint-config-next": "^16.0.0",
+    "to-ico": "^1.1.5",
     "typescript": "^5.8.3"
   }
 }

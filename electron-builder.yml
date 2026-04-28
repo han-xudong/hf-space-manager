@@ -1,7 +1,8 @@
-appId: com.github.xudonghan.hf-space-manager
+appId: com.github.han-xudong.hf-space-manager
 productName: HF Space Manager
 artifactName: hf-space-manager-${version}-${os}-${arch}.${ext}
 asar: false
+icon: build/icons/icon.png
 directories:
   output: dist/electron
 files:
@@ -24,12 +25,15 @@ files:
   - '!node_modules/.cache/**'
 mac:
   category: public.app-category.developer-tools
+  icon: build/icons/icon.icns
   target:
     - target: zip
 linux:
   category: Development
+  icon: build/icons/icon.png
   target:
     - target: AppImage
 win:
+  icon: build/icons/icon.ico
   target:
     - target: portable
