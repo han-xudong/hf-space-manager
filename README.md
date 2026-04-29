@@ -2,9 +2,9 @@
 
 [![Build Distributions](https://github.com/han-xudong/hf-space-manager/actions/workflows/build-distributions.yml/badge.svg)](https://github.com/han-xudong/hf-space-manager/actions/workflows/build-distributions.yml)
 [![Release](https://github.com/han-xudong/hf-space-manager/actions/workflows/release.yml/badge.svg)](https://github.com/han-xudong/hf-space-manager/actions/workflows/release.yml)
-[![Next.js](https://img.shields.io/badge/Next.js-black?logo=next.js)](https://nextjs.org/)
-[![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite)](https://www.sqlite.org/index.html)
-[![Electron](https://img.shields.io/badge/Electron-47848F?logo=electron)](https://www.electronjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/index.html)
+[![Electron](https://img.shields.io/badge/Electron-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 HF Space Manager is a self-hosted control plane for Hugging Face Spaces. It provides a web dashboard for live Space status, secure Hugging Face token management, operational actions such as sync, rebuild, and restart, and local-first deployment through Docker or Electron.
