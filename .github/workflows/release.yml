@@ -256,7 +256,7 @@ jobs:
         with:
           tag_name: ${{ needs.metadata.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          name: HF Space Manager ${{ needs.metadata.outputs.tag }}
+          name: ${{ needs.metadata.outputs.tag }}
           generate_release_notes: true
           prerelease: ${{ contains(needs.metadata.outputs.tag, '-') }}
           files: |
