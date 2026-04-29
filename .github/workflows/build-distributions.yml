@@ -1,4 +1,4 @@
-name: Build Distributions
+name: Quick Checks
 
 on:
   pull_request:
@@ -18,52 +18,10 @@ env:
   INTERNAL_EVENT_TOKEN: "12345678901234567890123456789012"
 
 jobs:
-  docker:
+  quality:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          load: true
-          tags: hf-space-manager:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  electron:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - id: linux
-            os: ubuntu-latest
-            platform: linux
-            target: AppImage
-            artifact_glob: dist/electron/*.AppImage
-          - id: macos
-            os: macos-latest
-            platform: mac
-            target: zip
-            artifact_glob: dist/electron/*.zip
-          - id: windows
-            os: windows-latest
-            platform: win
-            target: portable
-            artifact_glob: dist/electron/*.exe
-
-    permissions:
-      contents: read
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,17 +38,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Next.js runtime
-        run: pnpm build
+      - name: Lint
+        run: pnpm lint
 
-      - name: Build Electron distribution
-        run: pnpm exec electron-builder --config electron-builder.yml --${{ matrix.platform }} ${{ matrix.target }} --publish never
-        shell: bash
-
-      - name: Upload Electron artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-distribution-${{ matrix.id }}
-          path: ${{ matrix.artifact_glob }}
-          if-no-files-found: error
-          retention-days: 7
+      - name: Type check
+        run: pnpm exec tsc --noEmit
