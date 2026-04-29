@@ -7,11 +7,14 @@ import toIco from "to-ico";
 
 const rootDir = process.cwd();
 const sourceSvgPath = resolve(rootDir, "public/hfsm-logo.svg");
+const trayTemplateSvgPath = resolve(rootDir, "public/hfsm-tray-template.svg");
 const faviconPath = resolve(rootDir, "app/favicon.ico");
 const buildIconsDir = resolve(rootDir, "build/icons");
 const iconPngPath = resolve(buildIconsDir, "icon.png");
 const iconIcoPath = resolve(buildIconsDir, "icon.ico");
 const iconIcnsPath = resolve(buildIconsDir, "icon.icns");
+const trayTemplatePngPath = resolve(buildIconsDir, "trayTemplate.png");
+const trayTemplate2xPngPath = resolve(buildIconsDir, "trayTemplate@2x.png");
 const iconsetDir = resolve(buildIconsDir, "mac.iconset");
 const tempDir = resolve(buildIconsDir, ".tmp-generate-icons");
 
@@ -43,9 +46,9 @@ async function ensureReadable(path) {
   await access(path, constants.R_OK);
 }
 
-async function renderPng(size, outputPath) {
+async function renderPng(size, outputPath, inputPath = sourceSvgPath) {
   await mkdir(dirname(outputPath), { recursive: true });
-  run("rsvg-convert", ["-w", String(size), "-h", String(size), "-o", outputPath, sourceSvgPath]);
+  run("rsvg-convert", ["-w", String(size), "-h", String(size), "-o", outputPath, inputPath]);
 }
 
 async function createIco(outputPath, sizes) {
@@ -64,6 +67,7 @@ async function createIco(outputPath, sizes) {
 
 async function main() {
   await ensureReadable(sourceSvgPath);
+  await ensureReadable(trayTemplateSvgPath);
 
   await mkdir(buildIconsDir, { recursive: true });
   await rm(iconsetDir, { recursive: true, force: true });
@@ -72,6 +76,8 @@ async function main() {
   await mkdir(tempDir, { recursive: true });
 
   await renderPng(256, iconPngPath);
+  await renderPng(18, trayTemplatePngPath, trayTemplateSvgPath);
+  await renderPng(36, trayTemplate2xPngPath, trayTemplateSvgPath);
   await createIco(iconIcoPath, icoSizes);
   await createIco(faviconPath, faviconSizes);
 
@@ -82,7 +88,7 @@ async function main() {
   run("iconutil", ["-c", "icns", iconsetDir, "-o", iconIcnsPath]);
 
   await rm(tempDir, { recursive: true, force: true });
-  console.log("Generated icons from public/hfsm-logo.svg");
+  console.log("Generated application and tray icons from public SVG assets");
 }
 
 main().catch(async (error) => {

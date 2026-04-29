@@ -86,6 +86,15 @@ button {
   gap: 18px;
 }
 
+.app-frame:has(.electron-chrome) {
+  width: min(1280px, calc(100vw - 18px));
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(20, 17, 17, 0.72);
+}
+
 .shell-header,
 .panel,
 .hero-panel,
@@ -110,6 +119,133 @@ button {
   z-index: 20;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
+}
+
+.app-frame:has(.electron-chrome) .shell-header {
+  top: 64px;
+}
+
+.electron-chrome,
+.electron-chrome-bar,
+.electron-chrome-brand,
+.electron-chrome-copy,
+.electron-window-controls,
+.electron-chrome-meta {
+  display: flex;
+  align-items: center;
+}
+
+.electron-chrome {
+  position: sticky;
+  top: 8px;
+  z-index: 30;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(26, 23, 23, 0.98);
+}
+
+.electron-chrome-bar {
+  min-height: 40px;
+  gap: 10px;
+  padding: 6px 10px;
+  app-region: drag;
+}
+
+.electron-chrome[data-platform="darwin"] .electron-chrome-bar {
+  padding-left: 84px;
+}
+
+.electron-no-drag {
+  app-region: no-drag;
+}
+
+.electron-chrome-brand {
+  gap: 8px;
+  min-width: 0;
+}
+
+.electron-chrome-logo {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.electron-chrome-copy {
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.electron-chrome-copy p,
+.electron-chrome-copy span {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.electron-chrome-copy p {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--text);
+}
+
+.electron-chrome-copy span {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.electron-chrome-meta {
+  margin-left: auto;
+  gap: 6px;
+}
+
+.electron-chrome-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 1px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.electron-window-controls {
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.electron-window-button {
+  min-width: 34px;
+  min-height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.electron-window-button span {
+  display: block;
+  transform: translateY(-1px);
+}
+
+.electron-window-button:hover {
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.electron-window-button.is-danger:hover {
+  border-color: rgba(255, 59, 48, 0.7);
+  background: rgba(255, 59, 48, 0.16);
 }
 
 .shell-main {
@@ -830,6 +966,10 @@ button {
 }
 
 @media (max-width: 1080px) {
+  .app-frame:has(.electron-chrome) .shell-header {
+    top: auto;
+  }
+
   .shell-header {
     position: static;
     display: flex;
@@ -857,9 +997,39 @@ button {
 }
 
 @media (max-width: 720px) {
+  .app-frame:has(.electron-chrome) {
+    width: min(100vw - 10px, 100%);
+    padding: 6px;
+  }
+
   .app-frame {
     width: min(100vw - 20px, 100%);
     padding-top: 14px;
+  }
+
+  .electron-chrome-bar,
+  .electron-chrome-brand,
+  .electron-chrome-meta {
+    flex-wrap: wrap;
+  }
+
+  .electron-chrome-bar {
+    min-height: 38px;
+    padding: 8px;
+  }
+
+  .electron-chrome[data-platform="darwin"] .electron-chrome-bar {
+    padding-left: 84px;
+  }
+
+  .electron-chrome-meta {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .electron-window-controls {
+    margin-left: auto;
   }
 
   .shell-header,

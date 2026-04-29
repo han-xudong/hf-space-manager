@@ -99,6 +99,11 @@ export function buildElectronRuntime({
     { cwd: appRoot },
   );
 
+  const runtimeVendorRoot = process.resourcesPath
+    ? path.join(process.resourcesPath, "runtime-vendor")
+    : path.join(appRoot, "runtime-vendor");
+  const hasVendoredTsx = existsSync(path.join(runtimeVendorRoot, "node_modules", "tsx", "dist", "loader.mjs"));
+
   return {
     appRoot,
     runtimeRoot,
@@ -107,6 +112,8 @@ export function buildElectronRuntime({
     secretsDir,
     webEntry: path.join(appRoot, "scripts", "start-standalone.mjs"),
     workerEntry: path.join(appRoot, "worker", "index.ts"),
+    runtimeVendorRoot,
+    hasVendoredTsx,
     port,
     baseUrl: runtimeEnv.INTERNAL_WEB_BASE_URL,
     env: runtimeEnv,

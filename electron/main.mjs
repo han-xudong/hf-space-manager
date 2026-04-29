@@ -1,8 +1,9 @@
 import { spawn } from "node:child_process";
+import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, Tray, nativeImage, ipcMain, Menu } from "electron";
 
 import { ensureRuntimeDatabaseReady } from "../scripts/runtime-db.mjs";
 import { waitForHealth } from "../scripts/runtime-env.mjs";
@@ -10,11 +11,205 @@ import { buildElectronRuntime } from "./runtime.mjs";
 
 const preloadPath = fileURLToPath(new URL("./preload.mjs", import.meta.url));
 const smokeTest = process.env.ELECTRON_SMOKE_TEST === "1";
+const isMac = process.platform === "darwin";
+const WINDOW_CONTROL_CHANNEL = "hfsm:window-control";
+const WINDOW_STATE_CHANNEL = "hfsm:window-state";
+const WINDOW_STATE_REQUEST_CHANNEL = "hfsm:get-window-state";
+const trayIconPath = fileURLToPath(new URL("../build/icons/trayTemplate.png", import.meta.url));
+const trayIcon2xPath = fileURLToPath(new URL("../build/icons/trayTemplate@2x.png", import.meta.url));
 
 let mainWindow = null;
+let tray = null;
 let runtime = null;
 let isShuttingDown = false;
 const children = [];
+
+function isMainWindowVisible() {
+  return Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible());
+}
+
+function getWindowState(window) {
+  return {
+    isFullScreen: window.isFullScreen(),
+  };
+}
+
+function emitWindowState(window) {
+  if (window.isDestroyed()) {
+    return;
+  }
+
+  window.webContents.send(WINDOW_STATE_CHANNEL, getWindowState(window));
+}
+
+function showMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+
+  if (!mainWindow.isVisible()) {
+    mainWindow.show();
+  }
+
+  mainWindow.focus();
+  syncStatusMenus();
+}
+
+function hideMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  mainWindow.hide();
+  syncStatusMenus();
+}
+
+function navigateTo(pathname) {
+  if (!mainWindow || !runtime || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  void mainWindow.loadURL(`${runtime.baseUrl}${pathname}`);
+  showMainWindow();
+}
+
+function buildStatusMenu() {
+  const isVisible = isMainWindowVisible();
+
+  return Menu.buildFromTemplate([
+    {
+      label: "Show Dashboard",
+      click: () => navigateTo("/dashboard"),
+    },
+    {
+      label: "Connections",
+      click: () => navigateTo("/connections"),
+    },
+    {
+      label: "Settings",
+      click: () => navigateTo("/settings"),
+    },
+    { type: "separator" },
+    {
+      label: isVisible ? "Hide Window" : "Show Window",
+      click: () => {
+        if (isMainWindowVisible()) {
+          hideMainWindow();
+          return;
+        }
+
+        showMainWindow();
+      },
+    },
+    {
+      label: "Quit HF Space Manager",
+      click: () => app.quit(),
+    },
+  ]);
+}
+
+function syncStatusMenus() {
+  if (!isMac) {
+    return;
+  }
+
+  const menu = buildStatusMenu();
+
+  tray?.setContextMenu(menu);
+
+  if (app.dock) {
+    app.dock.setMenu(menu);
+  }
+}
+
+function createTray() {
+  if (!isMac || tray) {
+    return;
+  }
+
+  const trayIcon = nativeImage.createFromPath(trayIconPath);
+  const trayIcon2x = nativeImage.createFromPath(trayIcon2xPath);
+
+  if (!trayIcon.isEmpty() && !trayIcon2x.isEmpty()) {
+    trayIcon.addRepresentation({
+      scaleFactor: 2,
+      width: trayIcon2x.getSize().width,
+      height: trayIcon2x.getSize().height,
+      buffer: trayIcon2x.toPNG(),
+    });
+  }
+
+  trayIcon.setTemplateImage(true);
+  tray = new Tray(trayIcon);
+  tray.setToolTip("HF Space Manager");
+  syncStatusMenus();
+  tray.on("click", () => {
+    showMainWindow();
+  });
+  tray.on("right-click", () => {
+    tray?.popUpContextMenu(buildStatusMenu());
+  });
+
+  log("status bar tray is ready");
+}
+
+function installApplicationMenu() {
+  if (!isMac) {
+    Menu.setApplicationMenu(null);
+    return;
+  }
+
+  const menu = Menu.buildFromTemplate([
+    {
+      label: app.name,
+      submenu: [
+        { role: "about" },
+        { type: "separator" },
+        { role: "hide" },
+        { role: "hideOthers" },
+        { role: "unhide" },
+        { type: "separator" },
+        {
+          label: "Quit HF Space Manager",
+          accelerator: "Command+Q",
+          click: () => app.quit(),
+        },
+      ],
+    },
+    {
+      label: "Workspace",
+      submenu: [
+        {
+          label: "Dashboard",
+          accelerator: "Command+1",
+          click: () => navigateTo("/dashboard"),
+        },
+        {
+          label: "Connections",
+          accelerator: "Command+2",
+          click: () => navigateTo("/connections"),
+        },
+        {
+          label: "Settings",
+          accelerator: "Command+,",
+          click: () => navigateTo("/settings"),
+        },
+        { type: "separator" },
+        {
+          label: "Refresh View",
+          accelerator: "Command+R",
+          click: () => mainWindow?.webContents.reload(),
+        },
+      ],
+    },
+  ]);
+
+  Menu.setApplicationMenu(menu);
+}
 
 function log(message) {
   process.stdout.write(`[electron] ${message}\n`);
@@ -97,14 +292,30 @@ async function startRuntime() {
   await waitForHealth(runtime.baseUrl);
 
   log("web runtime is healthy; starting worker runtime");
-  spawnRuntimeProcess("worker", ["--import", "tsx", runtime.workerEntry]);
+  const vendoredTsxLoader = path.join(runtime.runtimeVendorRoot, "node_modules", "tsx", "dist", "loader.mjs");
+  const workerArgs = runtime.hasVendoredTsx
+    ? ["--import", vendoredTsxLoader, runtime.workerEntry]
+    : ["--import", "tsx", runtime.workerEntry];
+
+  spawnRuntimeProcess("worker", workerArgs);
 }
 
 async function createMainWindow() {
   mainWindow = new BrowserWindow({
-    width: 1440,
-    height: 960,
+    width: 1160,
+    height: 860,
+    minWidth: 1160,
+    minHeight: 860,
+    maxWidth: 1160,
+    maxHeight: 860,
     show: false,
+    frame: isMac,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: isMac,
+    titleBarStyle: isMac ? "hiddenInset" : undefined,
+    trafficLightPosition: isMac ? { x: 16, y: 16 } : undefined,
+    backgroundColor: "#201d1d",
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
@@ -112,13 +323,41 @@ async function createMainWindow() {
     },
   });
 
+  if (!isMac) {
+    mainWindow.removeMenu();
+    mainWindow.setMenuBarVisibility(false);
+  }
+
+  mainWindow.on("close", (event) => {
+    if (!isMac || isShuttingDown) {
+      return;
+    }
+
+    event.preventDefault();
+    hideMainWindow();
+  });
+
   mainWindow.on("closed", () => {
     mainWindow = null;
+    syncStatusMenus();
+  });
+
+  mainWindow.on("show", syncStatusMenus);
+  mainWindow.on("hide", syncStatusMenus);
+  mainWindow.on("minimize", syncStatusMenus);
+
+  mainWindow.on("enter-full-screen", () => emitWindowState(mainWindow));
+  mainWindow.on("leave-full-screen", () => emitWindowState(mainWindow));
+  mainWindow.on("restore", () => {
+    emitWindowState(mainWindow);
+    syncStatusMenus();
   });
 
   if (!smokeTest) {
     mainWindow.once("ready-to-show", () => {
       mainWindow?.show();
+      emitWindowState(mainWindow);
+      syncStatusMenus();
     });
   }
 
@@ -129,13 +368,43 @@ async function createMainWindow() {
   }
 }
 
+ipcMain.on(WINDOW_CONTROL_CHANNEL, (event, action) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+
+  if (!window) {
+    return;
+  }
+
+  if (action === "minimize") {
+    window.minimize();
+    return;
+  }
+
+  if (action === "close") {
+    window.close();
+  }
+});
+
+ipcMain.handle(WINDOW_STATE_REQUEST_CHANNEL, (event) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  return window ? getWindowState(window) : { isFullScreen: false };
+});
+
 app.on("before-quit", shutdownChildren);
 
 app.whenReady().then(async () => {
   await startRuntime();
+  installApplicationMenu();
+  createTray();
   await createMainWindow();
+  syncStatusMenus();
 
   app.on("activate", async () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      showMainWindow();
+      return;
+    }
+
     if (BrowserWindow.getAllWindows().length === 0 && runtime) {
       await createMainWindow();
     }
@@ -149,5 +418,12 @@ app.whenReady().then(async () => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin" || smokeTest) {
     app.quit();
+  }
+});
+
+app.on("before-quit", () => {
+  if (tray) {
+    tray.destroy();
+    tray = null;
   }
 });

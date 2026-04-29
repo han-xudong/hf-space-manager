@@ -6,13 +6,21 @@ icon: build/icons/icon.png
 directories:
   output: dist/electron
 files:
+  - build/icons/**/*
   - electron/**/*
   - lib/**/*
+  - node_modules/.prisma/**/*
+  - node_modules/@prisma/client/.prisma/**/*
+  - node_modules/**/*
   - prisma/**/*
   - scripts/**/*
   - worker/**/*
   - types/**/*
   - .next/standalone/**/*
+  - .next/standalone/node_modules/.prisma/**/*
+  - .next/standalone/.next/node_modules/.prisma/**/*
+  - .next/standalone/.next/node_modules/@prisma/**/*
+  - .next/standalone/.next/node_modules/@prisma/**/.prisma/**/*
   - .next/static/**/*
   - public/**/*
   - package.json
@@ -22,11 +30,31 @@ files:
   - '!data/**'
   - '!dist/**'
   - '!coverage/**'
+  - '!node_modules/@prisma/debug/**'
+  - '!node_modules/@prisma/engines/**'
+  - '!node_modules/@prisma/engines-version/**'
+  - '!node_modules/@prisma/fetch-engine/**'
+  - '!node_modules/@prisma/get-platform/**'
   - '!node_modules/.cache/**'
+extraResources:
+  - from: runtime-vendor
+    to: runtime-vendor
+    filter:
+      - '**/*'
+  - from: .next/standalone/.next/node_modules/@prisma
+    to: app/.next/standalone/.next/node_modules/@prisma
+    filter:
+      - '**/*'
+  - from: .next/standalone/.next/node_modules/.prisma
+    to: app/.next/standalone/.next/node_modules/.prisma
+    filter:
+      - '**/*'
 mac:
   category: public.app-category.developer-tools
+  identity: null
   icon: build/icons/icon.icns
   target:
+    - target: dmg
     - target: zip
 linux:
   category: Development
