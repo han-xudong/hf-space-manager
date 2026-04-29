@@ -3,6 +3,7 @@ import { constants } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
+import { Resvg } from "@resvg/resvg-js";
 import toIco from "to-ico";
 
 const rootDir = process.cwd();
@@ -48,7 +49,15 @@ async function ensureReadable(path) {
 
 async function renderPng(size, outputPath, inputPath = sourceSvgPath) {
   await mkdir(dirname(outputPath), { recursive: true });
-  run("rsvg-convert", ["-w", String(size), "-h", String(size), "-o", outputPath, inputPath]);
+  const svgBuffer = await readFile(inputPath);
+  const resvg = new Resvg(svgBuffer, {
+    fitTo: {
+      mode: "width",
+      value: size,
+    },
+  });
+  const pngData = resvg.render();
+  await writeFile(outputPath, pngData.asPng());
 }
 
 async function createIco(outputPath, sizes) {
@@ -85,7 +94,11 @@ async function main() {
     await renderPng(size, join(iconsetDir, fileName));
   }
 
-  run("iconutil", ["-c", "icns", iconsetDir, "-o", iconIcnsPath]);
+  if (process.platform === "darwin") {
+    run("iconutil", ["-c", "icns", iconsetDir, "-o", iconIcnsPath]);
+  } else {
+    console.log("Skipping icon.icns generation on non-macOS platform");
+  }
 
   await rm(tempDir, { recursive: true, force: true });
   console.log("Generated application and tray icons from public SVG assets");
