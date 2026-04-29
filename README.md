@@ -1,6 +1,6 @@
 # HF Space Manager
 
-[![Build Distributions](https://github.com/han-xudong/hf-space-manager/actions/workflows/build-distributions.yml/badge.svg)](https://github.com/han-xudong/hf-space-manager/actions/workflows/build-distributions.yml)
+[![Quick Checks](https://github.com/han-xudong/hf-space-manager/actions/workflows/quick-checks.yml/badge.svg)](https://github.com/han-xudong/hf-space-manager/actions/workflows/quick-checks.yml)
 [![Release](https://github.com/han-xudong/hf-space-manager/actions/workflows/release.yml/badge.svg)](https://github.com/han-xudong/hf-space-manager/actions/workflows/release.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/index.html)
